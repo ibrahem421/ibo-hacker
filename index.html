@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#08090e"><title>CART3R ARENA 6.1</title>
+<style>
+:root{--bg:#08090e;--p:#151721;--edge:#482737;--red:#ff4568;--blue:#50b6ff;--muted:#a7a9b5;--green:#66e5a4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -25%,#431426,transparent 55%),var(--bg);color:#f7f5f8;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:13px 17px;display:flex;justify-content:space-between;align-items:center;background:#090a10ed;border-bottom:1px solid var(--edge);position:sticky;top:0;z-index:3}.logo{font-weight:950;letter-spacing:.13em}.logo span{color:var(--red)}.tiny,.muted{color:var(--muted);font-size:11px}
+main{max-width:1200px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:12px}.panel{background:linear-gradient(145deg,#191b26,#101119);border:1px solid var(--edge);border-radius:16px;padding:14px;min-width:0}.wide{grid-column:1/-1}h2{font-size:12px;letter-spacing:.13em;color:#ff91a7;margin:0 0 10px}
+button,select,input{font:inherit;color:white;background:#211923;border:1px solid #704154;border-radius:10px;padding:10px;min-height:42px}button{cursor:pointer}.primary{background:linear-gradient(135deg,#c62a4d,#76172f);font-weight:800}.blue{background:#132c43;border-color:#398ac0}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.row>*{flex:1}.choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}.choices button{text-align:left;padding:14px}.choices strong{display:block;font-size:18px}.choices small{color:var(--muted)}.selected{outline:2px solid var(--red)}.hidden{display:none!important}.mapbox{width:100%;aspect-ratio:1;max-height:660px;margin:auto}.mapbox canvas{width:100%;height:100%;display:block;border-radius:12px;background:#14231e;touch-action:none}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}.stat{background:#201720;border:1px solid #472a39;border-radius:10px;padding:8px}.stat b{display:block;color:var(--red);font-size:20px}.stat small{color:var(--muted);font-size:10px}.controls{display:grid;grid-template-columns:repeat(3,54px);gap:6px;justify-content:center;margin:12px}.controls button{font-size:20px;touch-action:none}.up{grid-column:2}.left{grid-column:1}.down{grid-column:2}.right{grid-column:3}.note{background:#211d18;border-left:3px solid #ffd16a;padding:10px;border-radius:8px;color:#ddd;font-size:11px}.list{display:grid;gap:7px}.item{background:#1b1922;border:1px solid #3d2a38;border-radius:9px;padding:9px;font-size:12px}
+@media(max-width:740px){main{grid-template-columns:1fr;padding:8px}.wide{grid-column:auto}.stats{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<header><div><div class="logo"><span>CART3R</span> ARENA</div><div class="tiny">ULTIMATE EDITION · BUILD 6.2 · FIREBASE GUEST</div></div><div class="tiny" id="net">● OFFLINE</div></header>
+<main>
+<section class="panel wide" style="text-align:center"><div class="tiny">ONE GAME · TWO CONNECTION MODES</div><h1 style="font-size:clamp(30px,7vw,52px);margin:4px"><span style="color:var(--red)">CART3R</span> ARENA 6.1</h1>
+<div class="choices"><button id="offline" class="selected"><strong>◉ OFFLINE</strong><small>Alleine gegen Bots · lokal</small></button><button id="online"><strong>◎ ONLINE</strong><small>Öffentliche Suche + Freunde</small></button></div>
+<div class="row"><button id="catch" class="primary">🎯 BOT CATCH</button><button id="ctf" class="blue">🚩 5 VS 5 FLAGGEN</button></div>
+<div class="muted" id="modeLabel">Offline · Bot Catch</div></section>
+<section class="panel wide hidden" id="onlinePanel"><h2>PUBLIC MATCHMAKING</h2><div class="note">Online ist hier noch nicht live verbunden. Für echte öffentliche Räume wird Firebase plus eine sichere serverseitige Matchmaking-Funktion benötigt. Die Offline-Modi funktionieren ohne Firebase.</div><div class="row"><button id="publicQueue" class="primary">Öffentliche Suche</button><button id="privateRoom">Freundesraum erstellen</button></div><div class="item" id="onlineStatus">Noch nicht verbunden.</div><p class="muted">Matchmaking: automatische Suche über alle Regionen oder optionale Regionsauswahl. Maximal 10 Spieler pro Runde. Bei 10/10 startet ein servergesteuerter 10-Sekunden-Countdown.</p></section>
+<section class="panel wide" id="accountPanel"><h2>SPIELERPROFIL</h2><div class="item" id="authStatus">Firebase wird verbunden …</div><div class="muted" id="playerProfile">Gastkonto wird vorbereitet.</div></section>
+<section class="panel" id="mapPanel"><h2>STABILE OPEN-WORLD-KARTE</h2><div class="mapbox"><canvas id="game" width="720" height="720"></canvas></div><div class="stats"><div class="stat"><b id="score">0</b><small>PUNKTE</small></div><div class="stat"><b id="coins">0</b><small>COINS</small></div><div class="stat"><b id="remaining">10</b><small>BOTS</small></div><div class="stat"><b id="clock">03:00</b><small>ZEIT</small></div></div><div class="muted" style="margin-top:7px">Karte bleibt fest. Nur die Kamera folgt deiner Spielfigur.</div></section>
+<section class="panel"><h2>STEUERUNG & KAMERA</h2><label class="muted">Kameraperspektive<select id="camera"><option value="top">Draufsicht / Radar</option><option value="third">Hinter dem Spieler (Arcade-Ansicht)</option></select></label><label class="muted" style="display:block;margin-top:8px">Spielgeschwindigkeit<select id="speed"></select></label><div class="controls"><button class="up" data-dir="up">▲</button><button class="left" data-dir="left">◀</button><button class="down" data-dir="down">▼</button><button class="right" data-dir="right">▶</button></div><div class="row"><button class="primary" id="start">▶ Start</button><button id="pause">Ⅱ Pause</button><button id="reset">↻ Reset</button></div><div class="row"><button id="tag">⚡ Abfangen</button><button id="vehicle">🚗 Fahrzeug</button></div><div class="item" id="message">Bereit. Bewege DICH mit Pfeiltasten, WASD oder den Touch-Steuerknöpfen.</div></section>
+<section class="panel wide"><h2>WELT-DISTRIKTE</h2><div class="choices"><div class="item"><b>Downtown</b><br><span class="muted">Hochhäuser, enge Blocks, Kreuzungen</span></div><div class="item"><b>Industrial</b><br><span class="muted">Lagerhallen, Güterbahnhof, breite Straßen</span></div><div class="item"><b>Vinewood Hills</b><br><span class="muted">Kurvenstraßen, Villen, Höhenzüge</span></div><div class="item"><b>Harbor & Beach</b><br><span class="muted">Hafen, Strandpromenade, Brücken</span></div><div class="item"><b>Suburbs</b><br><span class="muted">Wohnstraßen, Parks, Tankstellen</span></div><div class="item"><b>County</b><br><span class="muted">Wald, See, Landstraßen und Dörfer</span></div></div></section>
+<section class="panel wide"><h2>FIREBASE IN KURZFORM</h2><ol class="muted"><li>Firebase ist Googles Cloud-Plattform – nicht dasselbe wie eine Firewall.</li><li>Authentication meldet Spieler sicher an.</li><li>Realtime Database überträgt Lobby- und Spielerstatus.</li><li>Cloud Functions oder ein eigener Game-Server prüft Raumgröße, Teams und Countdown.</li><li>Spielbewegungen und Spielregeln müssen serverseitig validiert werden, damit niemand Ergebnisse fälschen kann.</li></ol><div class="note">Eine Firebase-Web-Konfiguration allein macht noch kein Multiplayer-Spiel. Niemals Datenbankregeln öffentlich für beliebige Schreibzugriffe öffnen und niemals Admin-Schlüssel in eine Website einbauen.</div></section>
+</main><script>
+(()=>{
+const $=id=>document.getElementById(id),cv=$('game'),c=cv.getContext('2d');
+const W=24000,H=24000,view=720;let mode='catch',connection='offline',running=false,paused=false,me={x:12000,y:12000,angle:0},bots=[],cars=[],goal={x:18000,y:6000},flags=[],score=0,coins=0,time=180,drive=false,keys={},touch={x:0,y:0},last=0,raf=0;
+for(let s=.5;s<=10;s+=.5){let o=document.createElement('option');o.value=s;o.textContent=s.toFixed(1)+'×';if(s===1)o.selected=true;$('speed').add(o)}
+// Static world layer is painted once. It is never regenerated during animation.
+const world=document.createElement('canvas');world.width=2400;world.height=2400;const g=world.getContext('2d');
+function buildWorld(){g.fillStyle='#1c3028';g.fillRect(0,0,2400,2400);
+// water/shore
+g.fillStyle='#173c52';g.beginPath();g.moveTo(1900,0);g.bezierCurveTo(1700,450,2250,700,1900,1100);g.bezierCurveTo(1600,1500,2150,1800,1850,2400);g.lineTo(2400,2400);g.lineTo(2400,0);g.fill();
+// green districts
+g.fillStyle='#294332';[[100,100,430,330],[1800,1600,430,560],[100,1780,460,430],[1550,100,550,320]].forEach(a=>g.fillRect(...a));
+// roads in fixed world coordinates
+g.strokeStyle='#58616a';g.lineWidth=34;for(let y=180;y<2400;y+=270){g.beginPath();g.moveTo(0,y);g.lineTo(2400,y);g.stroke()}for(let x=180;x<2400;x+=300){g.beginPath();g.moveTo(x,0);g.lineTo(x,2400);g.stroke()}
+g.strokeStyle='#a1a7ac';g.lineWidth=2;g.setLineDash([18,18]);for(let y=180;y<2400;y+=270){g.beginPath();g.moveTo(0,y);g.lineTo(2400,y);g.stroke()}for(let x=180;x<2400;x+=300){g.beginPath();g.moveTo(x,0);g.lineTo(x,2400);g.stroke()}g.setLineDash([]);
+// buildings fixed
+for(let x=55;x<2300;x+=95)for(let y=50;y<2300;y+=95){if((x*3+y*7)%11<3)continue;let w=40+((x+y)%28),h=38+((x*2+y)%30);g.fillStyle=(x<1250&&y<1250)?'#737b84':'#59646b';g.fillRect(x,y,w,h);g.fillStyle='#89939a';g.fillRect(x+5,y+5,8,7)}
+g.fillStyle='#d7c39a';g.font='bold 34px system-ui';[['DOWNTOWN',520,570],['INDUSTRIAL',1550,600],['VINEWOOD',380,1900],['HARBOR',1900,1350],['SUBURBS',1100,2050]].forEach(a=>g.fillText(a[0],a[1],a[2]))}
+buildWorld();
+function d(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}function rnd(a,b){return a+Math.random()*(b-a)}function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function reset(){running=false;cancelAnimationFrame(raf);me={x:12000,y:12000,angle:0};score=0;coins=0;time=180;drive=false;goal={x:rnd(1000,23000),y:rnd(1000,23000)};cars=Array.from({length:24},()=>({x:rnd(500,23500),y:rnd(500,23500),taken:false}));bots=Array.from({length:mode==='catch'?10:9},(_,i)=>({id:i,x:rnd(1000,23000),y:rnd(1000,23000),alive:true,team:mode==='catch'?'red':i<4?'blue':'red',vx:0,vy:0,angle:0,car:false}));flags=[{x:3000,y:12000,team:'blue'},{x:21000,y:12000,team:'red'}];render()}
+function worldToScreen(p,camX,camY){return{x:view/2+(p.x-camX)*.06,y:view/2+(p.y-camY)*.06}}
+function drawEntity(p,color,r,cx,cy){let q=worldToScreen(p,cx,cy);if(q.x<-20||q.x>740||q.y<-20||q.y>740)return;c.fillStyle=color;c.beginPath();c.arc(q.x,q.y,r,0,Math.PI*2);c.fill()}
+function render(){c.clearRect(0,0,720,720);let cx=me.x,cy=me.y,scale=.06;
+if($('camera').value==='top'){c.save();c.translate(360,360);c.scale(scale,scale);c.translate(-cx,-cy);c.drawImage(world,0,0,W,H);c.restore();cars.forEach(v=>drawEntity(v,'#ffd16a',4,cx,cy));bots.filter(b=>b.alive).forEach(b=>drawEntity(b,b.team==='blue'?'#50b6ff':'#ff4568',6,cx,cy));if(mode==='catch')drawEntity(goal,'#66e5a4',9,cx,cy);else flags.forEach(f=>drawEntity(f,f.team==='blue'?'#50b6ff':'#ff4568',9,cx,cy));c.fillStyle='#fff';c.beginPath();c.arc(360,360,10,0,7);c.fill();c.strokeStyle='#ff4568';c.lineWidth=3;c.stroke()}
+else{ // stable arcade chase perspective; background horizon is static, player remains foreground
+c.fillStyle='#172a25';c.fillRect(0,0,720,720);c.fillStyle='#263c31';c.fillRect(0,0,720,360);c.fillStyle='#343c42';c.beginPath();c.moveTo(270,300);c.lineTo(450,300);c.lineTo(720,720);c.lineTo(0,720);c.fill();c.strokeStyle='#aab0b3';c.lineWidth=4;c.beginPath();c.moveTo(355,340);c.lineTo(330,720);c.moveTo(365,340);c.lineTo(390,720);c.stroke();c.fillStyle='#fff';c.fillRect(338,570,44,80);c.fillStyle='#ff4568';c.fillRect(345,560,30,16);let nearest=bots.filter(b=>b.alive).sort((a,b)=>d(a,me)-d(b,me)).slice(0,5);nearest.forEach((b,i)=>{let x=120+i*120,y=360+Math.min(250,d(b,me)*.012);c.fillStyle=b.team==='blue'?'#50b6ff':'#ff4568';c.beginPath();c.arc(x,y,Math.max(5,17-i*2),0,7);c.fill()});c.fillStyle='#fff';c.font='13px system-ui';c.fillText('CHASE CAMERA · ARCADE VIEW',18,28)}
+$('score').textContent=score;$('coins').textContent=coins;$('remaining').textContent=bots.filter(b=>b.alive).length;$('clock').textContent=String(Math.floor(time/60)).padStart(2,'0')+':'+String(Math.floor(time%60)).padStart(2,'0')}
+function update(dt){let dx=(keys.right?1:0)-(keys.left?1:0)+touch.x,dy=(keys.down?1:0)-(keys.up?1:0)+touch.y,len=Math.hypot(dx,dy);if(len){me.angle=Math.atan2(dy,dx);let speed=(drive?330:210)*dt;me.x=clamp(me.x+dx/len*speed,0,W);me.y=clamp(me.y+dy/len*speed,0,H)}
+bots.forEach(b=>{if(!b.alive)return;let target=mode==='catch'?goal:(b.team==='blue'?flags[1]:flags[0]);let dx=target.x-b.x,dy=target.y-b.y,L=Math.hypot(dx,dy)||1;let avoidX=0,avoidY=0,distPlayer=d(b,me);if(distPlayer<1700){avoidX=(b.x-me.x)/Math.max(1,distPlayer);avoidY=(b.y-me.y)/Math.max(1,distPlayer)}let tx=dx/L+avoidX*1.5,ty=dy/L+avoidY*1.5,T=Math.hypot(tx,ty)||1;let v=150*dt;b.x=clamp(b.x+tx/T*v,0,W);b.y=clamp(b.y+ty/T*v,0,H);b.angle=Math.atan2(ty,tx);if(mode==='catch'&&d(b,goal)<100){b.alive=false;coins=Math.max(0,coins-5)}});
+time=Math.max(0,time-dt);if(time<=0)running=false;render()}
+function loop(t){if(!running)return;let dt=Math.min(.035,(t-last)/1000||0)*Number($('speed').value);last=t;if(!paused)update(dt);raf=requestAnimationFrame(loop)}
+$('start').onclick=()=>{if(!running){running=true;last=performance.now();raf=requestAnimationFrame(loop);$('net').textContent='● '+connection.toUpperCase()+' SPIEL'}};
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'▶ Weiter':'Ⅱ Pause'};
+$('reset').onclick=reset;
+$('offline').onclick=()=>{connection='offline';$('offline').classList.add('selected');$('online').classList.remove('selected');$('onlinePanel').classList.add('hidden');$('net').textContent='● OFFLINE';$('modeLabel').textContent='Offline · '+(mode==='catch'?'Bot Catch':'5 vs 5 Flaggen');reset()};
+$('online').onclick=()=>{connection='online';$('online').classList.add('selected');$('offline').classList.remove('selected');$('onlinePanel').classList.remove('hidden');$('net').textContent='● ONLINE – BACKEND NÖTIG';$('modeLabel').textContent='Online ausgewählt · Live-Server noch nicht eingerichtet'};
+$('catch').onclick=()=>{mode='catch';$('modeLabel').textContent=connection+' · Bot Catch';reset()};
+$('ctf').onclick=()=>{mode='flag';$('modeLabel').textContent=connection+' · 5 vs 5 Capture the Flag';reset()};
+$('camera').onchange=render;
+$('tag').onclick=()=>{let b=bots.filter(x=>x.alive&&d(x,me)<190).sort((a,b)=>d(a,me)-d(b,me))[0];if(b){b.alive=false;score+=100;coins+=10;$('message').textContent='Bot abgefangen · +100 Punkte / +10 Coins'}else $('message').textContent='Kein Bot in Reichweite';render()};
+$('vehicle').onclick=()=>{if(drive){drive=false;$('message').textContent='Ausgestiegen';return}let v=cars.find(v=>!v.taken&&d(v,me)<260);if(v){v.taken=true;drive=true;$('message').textContent='Fahrzeug betreten'}else $('message').textContent='Kein Fahrzeug in der Nähe'};
+const km={ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right'};addEventListener('keydown',e=>{let k=km[e.key]||km[e.key.toLowerCase()];if(k){keys[k]=true;e.preventDefault()}});addEventListener('keyup',e=>{let k=km[e.key]||km[e.key.toLowerCase()];if(k)keys[k]=false});
+document.querySelectorAll('[data-dir]').forEach(btn=>{let v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[btn.dataset.dir];btn.onpointerdown=e=>{e.preventDefault();touch={x:v[0],y:v[1]}};['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,()=>touch={x:0,y:0}))});
+$('publicQueue').onclick=()=>$('onlineStatus').textContent='Öffentliche Suche kann erst starten, wenn Firebase Authentication, Database und serverseitige Matchmaking-Funktion bereitgestellt sind.';
+$('privateRoom').onclick=()=>$('onlineStatus').textContent='Freundesräume benötigen denselben sicheren Backend-Dienst. Raumcode allein synchronisiert keine Spieler.';
+reset();
+})();
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCvc7eHXKDcpn-3ISv0dJzer7H9NDTA0IY",
+  authDomain: "cart3r-arena.firebaseapp.com",
+  databaseURL: "https://cart3r-arena-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "cart3r-arena",
+  storageBucket: "cart3r-arena.firebasestorage.app",
+  messagingSenderId: "280406798150",
+  appId: "1:280406798150:web:af32e4e87d1dd6c1eaff47",
+  measurementId: "G-QL2CHMM2XV"
+};
+
+const statusEl = document.getElementById("authStatus");
+const profileEl = document.getElementById("playerProfile");
+
+try {
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    const profileRef = ref(db, `profiles/${user.uid}`);
+    try {
+      const snapshot = await get(profileRef);
+      let profile;
+      if (snapshot.exists()) {
+        profile = snapshot.val();
+      } else {
+        const suffix = user.uid.slice(0, 5).toUpperCase();
+        profile = { playerName: `Spieler-${suffix}`, level: 1, xp: 0, wins: 0, losses: 0, createdAt: Date.now() };
+        await set(profileRef, profile);
+      }
+      statusEl.textContent = "● FIREBASE VERBUNDEN · Gastkonto aktiv";
+      profileEl.textContent = `${profile.playerName} · Level ${profile.level} · XP ${profile.xp} · Siege ${profile.wins} · Niederlagen ${profile.losses}`;
+      document.getElementById("net").textContent = "● FIREBASE GASTKONTO";
+    } catch (err) {
+      statusEl.textContent = "Firebase angemeldet, aber Profilzugriff fehlgeschlagen.";
+      profileEl.textContent = "Bitte prüfe die Realtime-Database-Regeln für /profiles.";
+      console.error(err);
+    }
+  });
+  await signInAnonymously(auth);
+} catch (err) {
+  statusEl.textContent = "Firebase-Verbindung fehlgeschlagen: " + (err?.message || "Unbekannter Fehler");
+  profileEl.textContent = "Offline spielen geht weiterhin. Prüfe Firebase Authentication und die Web-Konfiguration.";
+  console.error(err);
+}
+</script>
+
+</body></html>
