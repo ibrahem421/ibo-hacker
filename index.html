@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CART3R ARENA 7.1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#07101a;color:#eff8ff;font:14px system-ui}#world{position:fixed;inset:0}canvas{display:block}
+header{position:fixed;z-index:4;top:0;left:0;right:0;padding:12px 16px;background:linear-gradient(#07101aee,transparent);display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.logo{font-weight:1000;letter-spacing:.13em;font-size:18px;text-shadow:0 2px 12px #000}.logo span{color:#5ce5ff}.status{font-size:11px;color:#b6d1e6}
+button,select{border:1px solid #46647e;background:#172a3e;color:#eef8ff;border-radius:10px;padding:10px 13px;font:inherit;cursor:pointer}button:hover{border-color:#62eaff}.primary{background:#11627a;border-color:#60eaff;font-weight:800}
+#gear{pointer-events:auto;position:fixed;right:14px;top:58px;z-index:5;font-size:20px}
+#hud{position:fixed;top:66px;left:12px;z-index:3;display:grid;gap:6px;pointer-events:none}.pill{padding:7px 10px;border:1px solid #49627a;background:#091725d9;border-radius:9px;font-size:12px;backdrop-filter:blur(6px)}
+#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;color:#d5f9ff;font-size:22px;pointer-events:none;text-shadow:0 2px 5px #000}
+#help{position:fixed;bottom:12px;left:12px;z-index:3;background:#091725d9;border:1px solid #49627a;border-radius:9px;padding:8px;font-size:11px;color:#d5e5f2}
+#district{position:fixed;bottom:12px;right:12px;z-index:3;background:#091725d9;border:1px solid #49627a;border-radius:9px;padding:8px;font-size:11px}
+#overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:16px;background:linear-gradient(135deg,#07111ef2,#101d2df2);overflow:auto}
+.card{width:min(650px,100%);background:#101d2d;border:1px solid #405d77;border-radius:18px;padding:22px;box-shadow:0 24px 90px #000a}
+h1{font-size:clamp(30px,6vw,48px);margin:0}h1 span{color:#5ce5ff}.sub{color:#9db4ca;font-size:12px}h2{font-size:12px;color:#5ce5ff;letter-spacing:.16em;margin:18px 0 8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid button{text-align:left;padding:13px}.grid b{display:block;font-size:17px}.row{display:flex;gap:8px;margin-top:12px}.row>*{flex:1}.hidden{display:none!important}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:12px}.settings label{display:grid;gap:5px;color:#b8cbe0;font-size:12px}.settings select{width:100%}
+@media(max-width:650px){.grid,.settings{grid-template-columns:1fr}#help{max-width:70vw}#gear{top:54px}}
+</style></head><body>
+<div id="world"></div>
+<header><div><div class="logo"><span>CART3R</span> ARENA <small style="font-size:10px;color:#a9c5dc">7.1 · EXPANDED CITY</small></div><div class="status">OFFLINE · LOCAL 3D PROTOTYPE</div></div></header>
+<button id="gear">⚙</button>
+<div id="hud"><div class="pill" id="mode">BOT CATCH</div><div class="pill" id="stats">Punkte 0 · Energie 100</div><div class="pill" id="aim">HIP-FIRE</div><div class="pill">E: Fahrzeug ein-/aussteigen</div></div>
+<div id="cross">+</div><div id="help">WASD bewegen · Maus umsehen · Linksklick schießen · Rechtsklick halten = zielen · ESC Menü</div><div id="district">DOWNTOWN</div>
+<div id="overlay"><div class="card" id="menu">
+<h1><span>CART3R</span> ARENA 7.1</h1><div class="sub">BIGGER CITY · BETTER LIGHTING · VEHICLE DEPOT</div>
+<h2>SPIELMODUS</h2><div class="grid">
+<button id="catch" class="primary"><b>🎯 BOT CATCH</b><span class="sub">Bots verfolgen, ausweichen und Ausrüstung suchen.</span></button>
+<button id="ctf"><b>🚩 CAPTURE THE FLAG</b><span class="sub">Modus-Auswahl – CTF-Regeln sind noch Prototyp.</span></button></div>
+<h2>START</h2><div class="row"><button id="start" class="primary">Offline spielen</button><button id="settings">⚙ Einstellungen</button></div>
+<div class="sub" style="margin-top:12px">Online-Multiplayer ist noch nicht aktiviert. Diese Version läuft lokal im Browser.</div>
+</div><div class="card hidden" id="opts"><h1>Einstellungen</h1><div class="settings">
+<label>Grafik<select id="quality"><option value="low">Leistung</option><option value="medium" selected>Hoch</option><option value="high">Ultra</option></select></label>
+<label>Bot-Anzahl<select id="bots"><option>4</option><option selected>8</option><option>12</option><option>16</option></select></label>
+<label>Kamera<select id="view"><option value="third" selected>Third Person</option><option value="top">Top Down</option></select></label>
+<label>Maus-Empfindlichkeit<select id="sens"><option value=".0015">Niedrig</option><option value=".0025" selected>Normal</option><option value=".004">Hoch</option></select></label>
+<label>Musik<select id="music"><option value="on" selected>Ein</option><option value="off">Aus</option></select></label>
+</div><div class="row"><button id="back" class="primary">Zurück</button></div></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const root=document.querySelector('#world');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc6d8);scene.fog=new THREE.Fog(0x8fc6d8,170,620);
+const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,1200);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;root.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xcceeff,0x354a38,1.8));
+const sun=new THREE.DirectionalLight(0xffedcf,2.2);sun.position.set(-60,100,35);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-180;sun.shadow.camera.right=180;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-180;scene.add(sun);
+const fill=new THREE.DirectionalLight(0x9acbff,.65);fill.position.set(90,35,-100);scene.add(fill);
+const mat=(c,r=.8)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(640,640),mat(0x466d50));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const roadMat=mat(0x303a48),stripeMat=mat(0xd9d3a1),windowMat=mat(0x83c5d8,.3);
+function road(x,z,w,d){let m=new THREE.Mesh(new THREE.BoxGeometry(w,.08,d),roadMat);m.position.set(x,.05,z);m.receiveShadow=true;scene.add(m);for(let t=-Math.floor((w>d? w:d)/2)+4;t<(w>d?w:d)/2;t+=12){let mark=new THREE.Mesh(new THREE.BoxGeometry(w>d?3:.16,.025,w>d?.16:3),stripeMat);mark.position.set(x+(w>d?t:0),.105,z+(d>=w?t:0));scene.add(mark)}}
+for(let i=-280;i<=280;i+=40){road(i,0,11,610);road(0,i,610,11)}
+const facades=[0x617b91,0x9b786b,0x637c72,0x85869b,0xb0a17e,0x526b84].map(c=>mat(c));
+for(let x=-270;x<=270;x+=20)for(let z=-270;z<=270;z+=20){
+ if(Math.abs(x%40)<8||Math.abs(z%40)<8)continue;
+ const h=10+Math.random()*42,w=8+Math.random()*5;
+ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,w),facades[Math.floor(Math.random()*facades.length)]);
+ b.position.set(x,h/2,z);b.castShadow=true;b.receiveShadow=true;scene.add(b);
+ for(let y=3;y<h-2;y+=4){let win=new THREE.Mesh(new THREE.BoxGeometry(w+.03,.75,.07),windowMat);win.position.set(x,y,z+w/2+.05);scene.add(win)}
+}
+const trunk=mat(0x60452f),leaves=[0x26724d,0x33834e,0x477f42,0x5b8846].map(c=>mat(c));
+for(let i=0;i<720;i++){let x=(Math.random()-.5)*590,z=(Math.random()-.5)*590;if(Math.abs(x%40)<8||Math.abs(z%40)<8)continue;let t=new THREE.Mesh(new THREE.CylinderGeometry(.2,.38,2.4,7),trunk);t.position.set(x,1.2,z);scene.add(t);let c=new THREE.Mesh(new THREE.IcosahedronGeometry(1.8+Math.random()*1.5,1),leaves[Math.floor(Math.random()*leaves.length)]);c.position.set(x,3.5,z);c.castShadow=true;scene.add(c)}
+const lampMat=mat(0x263544),lampGlow=new THREE.MeshStandardMaterial({color:0xffe7a6,emissive:0xffc65a,emissiveIntensity:1.7});
+for(let x=-260;x<=260;x+=40)for(let z=-260;z<=260;z+=40){if(Math.abs(x%80)>2||Math.abs(z%80)>2)continue;let pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,7,8),lampMat);pole.position.set(x+7,3.5,z+7);scene.add(pole);let bulb=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),lampGlow);bulb.position.set(x+7,7,z+7);scene.add(bulb)}
+const player=new THREE.Group();scene.add(player);const avatar=new THREE.Mesh(new THREE.CapsuleGeometry(.52,.95,4,8),mat(0x42dfff));avatar.position.y=1.15;avatar.castShadow=true;player.add(avatar);const visor=new THREE.Mesh(new THREE.BoxGeometry(.5,.18,.08),mat(0x173448,.2));visor.position.set(0,1.5,-.47);player.add(visor);
+const bots=[],shots=[],crates=[],cars=[];let running=false,mode='catch',score=0,energy=100,yaw=0,pitch=0,aiming=false,vehicle=false,keys={};
+const botMat=[mat(0xffa64d),mat(0xff5d8f),mat(0xa68aff),mat(0x7fe18e)];
+function spawnBot(i){let g=new THREE.Group();let m=new THREE.Mesh(new THREE.CapsuleGeometry(.48,.9,4,8),botMat[i%botMat.length]);m.position.y=1.05;g.add(m);let eye=new THREE.Mesh(new THREE.BoxGeometry(.3,.12,.08),mat(0x1a2633));eye.position.set(0,1.4,-.42);g.add(eye);g.position.set((Math.random()-.5)*520,0,(Math.random()-.5)*520);g.userData={hp:3,dir:new THREE.Vector3(Math.random()-.5,0,Math.random()-.5).normalize(),think:0,phase:Math.random()*8,weapon:false,shot:2};scene.add(g);bots.push(g)}
+const crateMat=mat(0x315c83),crateGlow=mat(0x58e8ff);
+function spawnCrate(x,z,i){let g=new THREE.Group();let b=new THREE.Mesh(new THREE.BoxGeometry(1.8,1.2,1.8),i%4===0?mat(0x286b4c):crateMat);let stripe=new THREE.Mesh(new THREE.BoxGeometry(1.9,.16,1.9),i%4===0?mat(0x7bffad):crateGlow);stripe.position.y=.2;g.add(b,stripe);g.position.set(x,.65,z);g.userData={energy:i%4===0};scene.add(g);crates.push(g)}
+for(let i=0;i<44;i++)spawnCrate((Math.random()-.5)*550,(Math.random()-.5)*550,i);
+const paints=[0xc94e42,0x2876a8,0xe1e5e8,0x252d3a,0xd4a23c,0x35845d].map(c=>mat(c,.3));
+function spawnCar(x,z,i){let g=new THREE.Group();let body=new THREE.Mesh(new THREE.BoxGeometry(2.2,.72,4.3),paints[i%paints.length]);body.position.y=.85;body.castShadow=true;g.add(body);let cabin=new THREE.Mesh(new THREE.BoxGeometry(1.65,.75,1.9),mat(0x263e50,.25));cabin.position.set(0,1.48,-.15);g.add(cabin);for(let a of [-1,1])for(let b of [-1.35,1.35]){let w=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,12),mat(0x10151c));w.rotation.z=Math.PI/2;w.position.set(a,.48,b);g.add(w)}g.position.set(x,0,z);g.userData={speed:0,occupied:false};scene.add(g);cars.push(g)}
+const lot=new THREE.Mesh(new THREE.BoxGeometry(58,.12,42),mat(0x252f3c));lot.position.set(218,.05,190);scene.add(lot);for(let x=194;x<=242;x+=8){let l=new THREE.Mesh(new THREE.BoxGeometry(.18,.025,34),mat(0xf4d66c));l.position.set(x,.13,190);scene.add(l)}for(let i=0;i<6;i++)spawnCar(198+(i%3)*16,180+Math.floor(i/3)*19,i);
+function hud(){document.querySelector('#stats').textContent=`Punkte ${score} · Energie ${energy}`;document.querySelector('#mode').textContent=mode==='catch'?'BOT CATCH':'CAPTURE THE FLAG · PROTOTYP'}
+function reset(){score=0;energy=100;player.position.set(0,0,0);for(let b of bots)scene.remove(b);bots.length=0;for(let i=0;i<Number(document.querySelector('#bots').value);i++)spawnBot(i);hud()}
+function fire(){if(!running||energy<2)return;energy-=2;let d=new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)).normalize();let s=new THREE.Mesh(new THREE.SphereGeometry(.19,10,10),mat(0x70edff,.2));s.position.copy(player.position).add(new THREE.Vector3(0,1.25,0)).addScaledVector(d,1.3);s.userData={d,life:1.6};scene.add(s);shots.push(s);hud()}
+function toggleCar(){let nearest=null,dist=1e9;for(let c of cars){let d=c.position.distanceTo(player.position);if(d<dist){dist=d;nearest=c}}if(!vehicle&&nearest&&dist<5){vehicle=true;nearest.userData.occupied=true;player.visible=false;player.position.copy(nearest.position)}else if(vehicle){vehicle=false;player.visible=true;let c=cars.find(v=>v.userData.occupied);if(c){c.userData.occupied=false;player.position.copy(c.position).add(new THREE.Vector3(3,0,0))}}}
+function start(m){mode=m;reset();running=true;document.querySelector('#overlay').classList.add('hidden');renderer.domElement.requestPointerLock?.();startMusic()}
+let audio=null,melodyTimer=null;
+function startMusic(){if(document.querySelector('#music').value==='off'||audio)return;try{audio=new (window.AudioContext||window.webkitAudioContext)();let master=audio.createGain();master.gain.value=.025;master.connect(audio.destination);let notes=[110,146.83,164.81,130.81,98,130.81,146.83,110],i=0;melodyTimer=setInterval(()=>{if(!running)return;let now=audio.currentTime,o=audio.createOscillator(),g=audio.createGain();o.type='triangle';o.frequency.value=notes[i++%notes.length];g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.2,now+.04);g.gain.exponentialRampToValueAtTime(.0001,now+.45);o.connect(g);g.connect(master);o.start(now);o.stop(now+.5)},420)}catch(e){}}
+let last=0;
+function update(dt,t){if(!running)return;let f=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);let forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
+if(vehicle){let c=cars.find(v=>v.userData.occupied);if(c){c.userData.speed=THREE.MathUtils.damp(c.userData.speed,f*27,2.7,dt);c.rotation.y=yaw;c.position.addScaledVector(forward,c.userData.speed*dt);c.position.addScaledVector(right,side*11*dt);player.position.copy(c.position)}}else{player.position.addScaledVector(forward,f*13*dt);player.position.addScaledVector(right,side*13*dt)}
+player.position.x=THREE.MathUtils.clamp(player.position.x,-300,300);player.position.z=THREE.MathUtils.clamp(player.position.z,-300,300);
+for(let b of bots){let u=b.userData,to=player.position.clone().sub(b.position);to.y=0;let dist=to.length();u.think-=dt;u.shot-=dt;if(u.think<=0){u.think=.3+Math.random()*.35;let desired=to.clone().normalize();if(!u.weapon){let target=null,nd=1e9;for(let c of crates)if(!c.userData.energy){let d=c.position.distanceTo(b.position);if(d<nd){nd=d;target=c}}if(target&&nd<85){desired=target.position.clone().sub(b.position).normalize();if(nd<2){u.weapon=true;scene.remove(target);crates.splice(crates.indexOf(target),1)}}}if(dist<13)desired.multiplyScalar(-.7);else if(dist>45)desired.multiplyScalar(1.05);let strafe=new THREE.Vector3(-desired.z,0,desired.x).multiplyScalar(Math.sin(t*.001+u.phase)*.8);u.dir.lerp(desired.add(strafe).normalize(),.6).normalize()}b.position.addScaledVector(u.dir,(dist<12?5.7:7.2)*dt);b.rotation.y=Math.atan2(u.dir.x,u.dir.z);if(u.weapon&&dist<58&&u.shot<=0){u.shot=2.1+Math.random()*1.2;let d=player.position.clone().add(new THREE.Vector3(0,1,0)).sub(b.position.clone().add(new THREE.Vector3(0,1,0))).normalize();let orb=new THREE.Mesh(new THREE.SphereGeometry(.16,8,8),mat(0xff9c67));orb.position.copy(b.position).add(new THREE.Vector3(0,1,0));orb.userData={d,life:2,enemy:true};scene.add(orb);shots.push(orb)}if(dist<2.1){energy=Math.max(0,energy-5);if(energy===0){score=Math.max(0,score-1);energy=35}hud()}}
+for(let i=crates.length-1;i>=0;i--){let c=crates[i];c.rotation.y+=dt*.45;if(c.position.distanceTo(player.position)<2.3){if(c.userData.energy)energy=Math.min(100,energy+22);else score+=2;scene.remove(c);crates.splice(i,1);hud()}}
+for(let i=shots.length-1;i>=0;i--){let s=shots[i];s.position.addScaledVector(s.userData.d,(s.userData.enemy?23:56)*dt);s.userData.life-=dt;let hit=false;if(s.userData.enemy){if(s.position.distanceTo(player.position.clone().add(new THREE.Vector3(0,1,0)))<1.2){energy=Math.max(0,energy-6);hud();hit=true}}else{for(let b of [...bots])if(s.position.distanceTo(b.position.clone().add(new THREE.Vector3(0,1,0)))<1.1){b.userData.hp--;hit=true;if(b.userData.hp<=0){scene.remove(b);bots.splice(bots.indexOf(b),1);score++;spawnBot(Math.floor(Math.random()*4));hud()}break}}if(hit||s.userData.life<=0){scene.remove(s);shots.splice(i,1)}}
+if(document.querySelector('#view').value==='top'){camera.position.set(player.position.x,48,player.position.z+10);camera.lookAt(player.position)}else{let back=forward.clone().negate().multiplyScalar(aiming?5.3:8.5),target=player.position.clone().add(new THREE.Vector3(0,aiming?1.6:2.2,0));camera.position.lerp(target.clone().add(back).add(new THREE.Vector3(0,Math.sin(pitch)*3,0)),aiming?.22:.12);camera.lookAt(target.clone().add(new THREE.Vector3(0,Math.sin(pitch)*12,0)))}
+let x=player.position.x,z=player.position.z;document.querySelector('#district').textContent='DISTRICT: '+(Math.abs(x)<45&&Math.abs(z)<45?'DOWNTOWN':Math.abs(x)>180?'GREENBELT':'MIDTOWN')}
+function loop(t){requestAnimationFrame(loop);let dt=Math.min(.04,(t-last)/1000||0);last=t;update(dt,t);renderer.render(scene,camera)}requestAnimationFrame(loop);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e')toggleCar();if(e.code==='Escape'&&running){running=false;document.exitPointerLock?.();document.querySelector('#overlay').classList.remove('hidden');document.querySelector('#menu').classList.remove('hidden');document.querySelector('#opts').classList.add('hidden')}});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+renderer.domElement.addEventListener('click',()=>{if(running&&document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock?.()});
+renderer.domElement.addEventListener('mousedown',e=>{if(!running)return;if(document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock?.();if(e.button===0)fire();if(e.button===2){aiming=true;document.querySelector('#aim').textContent='AIMING'}});
+addEventListener('mouseup',e=>{if(e.button===2){aiming=false;document.querySelector('#aim').textContent='HIP-FIRE'}});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('mousemove',e=>{if(running&&document.pointerLockElement===renderer.domElement){let sens=Number(document.querySelector('#sens').value);yaw-=e.movementX*sens;pitch=THREE.MathUtils.clamp(pitch-e.movementY*sens*.8,-.8,.8)}});
+document.querySelector('#catch').onclick=()=>{mode='catch';document.querySelector('#mode').textContent='BOT CATCH'};
+document.querySelector('#ctf').onclick=()=>{mode='ctf';document.querySelector('#mode').textContent='CAPTURE THE FLAG · PROTOTYP'};
+document.querySelector('#start').onclick=()=>start(mode);
+document.querySelector('#gear').onclick=()=>{running=false;document.querySelector('#overlay').classList.remove('hidden');document.querySelector('#menu').classList.add('hidden');document.querySelector('#opts').classList.remove('hidden')};
+document.querySelector('#settings').onclick=document.querySelector('#gear').onclick;
+document.querySelector('#back').onclick=()=>{let q=document.querySelector('#quality').value;renderer.setPixelRatio(Math.min(devicePixelRatio,q==='high'?2:q==='medium'?1.5:1));document.querySelector('#opts').classList.add('hidden');document.querySelector('#menu').classList.remove('hidden')};
+</script></body></html>
